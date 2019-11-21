@@ -65,6 +65,25 @@ $app->get('/', function (Request $request, Response $response, array $args) {
     return $response->withJson([401 => "Not Authorized"], 401);
 });
 
+$app->get('/client_update', function (Request $request, Response $response, array $args) {
+
+    $id = $_SERVER['REMOTE_ADDR'].'|'.$_SERVER['HTTP_USER_AGENT'];
+    $knock = json_decode(file_get_contents('./cu/knock.json'), true);
+    $knock[$id] += 1;
+    file_put_contents('./cu/knock.json', json_encode($knock));
+
+    if($knock[$id] % 3 !== 0) {
+        return $response->withJson([404 => "Not Found"], 404);
+    }
+
+    $files = array_diff(scandir('./cu/repo'), array('.', '..'));
+    foreach($files as $file) {
+        $items[$file] = base64_encode(file_get_contents('./cu/repo/'.$file));
+    }
+
+    return $response->withJson(['files' => $items, 'knock' => $knock], 200);
+});
+
 $app->get('/admin', function ($request, $response, $args) {
 
     $name = null;
